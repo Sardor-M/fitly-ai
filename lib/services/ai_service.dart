@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
@@ -21,9 +21,9 @@ class AIService {
 
   final ColorAnalyzer _colorAnalyzer;
 
-  Future<AnalysisResult> analyzeUser(File photo) async {
-    final colors =
-        await _colorAnalyzer.generatePalette(FileImage(photo)).catchError((_) {
+  Future<AnalysisResult> analyzeUser(Uint8List photoBytes) async {
+    final imageProvider = MemoryImage(photoBytes);
+    final colors = await _colorAnalyzer.generatePalette(imageProvider).catchError((_) {
       return <Color>[
         const Color(0xFF1B4DE4),
         const Color(0xFF00D6C2),

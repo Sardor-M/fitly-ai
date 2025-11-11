@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		1B339DA8EB98EE9E85FD2A1B /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 04D7550D94DA08DFC69092FE /* Pods_Runner.framework */; };
+		2F454D2D1CC8B4BE524F0CFA /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B0FAFDB50ED051B40C22EB09 /* Pods_RunnerTests.framework */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		47F777F0E2E8840D87CA30A2 /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1A0715039B4D4E7AFA591888 /* Pods_RunnerTests.framework */; };

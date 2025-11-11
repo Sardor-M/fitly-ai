@@ -64,4 +64,3 @@ class AppCameraController extends GetxController {
     super.onClose();
   }
 }
-

@@ -11,7 +11,7 @@ class AppSecrets {
 class AppConstants {
   AppConstants._();
 
-  static const appName = 'Fitly AI';
+  static const appName = 'FIT:LY';
   static const primaryColor = Color(0xFF1B4DE4);
   static const accentColor = Color(0xFF00D6C2);
 
