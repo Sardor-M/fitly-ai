@@ -22,35 +22,45 @@ class AuthLayout extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        subtitle!,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                    SizedBox(height: spacing),
+                    SizedBox(
+                      height: 200,
+                      child: Center(child: body),
+                    ),
+                  ],
                 ),
               ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  subtitle!,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-              SizedBox(height: spacing),
-              Expanded(
-                child: Center(child: body),
-              ),
-              action,
-            ],
-          ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: action,
+            ),
+          ],
         ),
       ),
     );

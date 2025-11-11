@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../utils/constants.dart';
@@ -7,7 +8,7 @@ class ApiService {
   ApiService._internal()
       : dio = Dio(
           BaseOptions(
-            baseUrl: AppConstants.supabaseUrl,
+            baseUrl: AppSecrets.supabaseUrl,
             connectTimeout: const Duration(seconds: 20),
             receiveTimeout: const Duration(seconds: 20),
           ),
@@ -21,9 +22,13 @@ class ApiService {
   SupabaseClient get client => Supabase.instance.client;
 
   Future<void> signInWithGoogle() async {
+    final redirect = kIsWeb
+        ? '${Uri.base.origin}/#/auth/callback'
+        : 'io.supabase.flutter://login-callback/';
+
     await client.auth.signInWithOAuth(
       OAuthProvider.google,
-      redirectTo: 'io.supabase.flutter://login-callback/',
+      redirectTo: redirect,
     );
   }
 

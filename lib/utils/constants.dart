@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class AppSecrets {
+  const AppSecrets._();
+
+  static String get supabaseUrl => dotenv.env['SUPABASE_URL'] ?? '';
+  static String get supabaseAnonKey => dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+}
 
 class AppConstants {
   AppConstants._();
 
   static const appName = 'Fitly AI';
-
-  /// TODO(sardor): Replace the placeholders with your Supabase credentials.
-  static const supabaseUrl = 'https://YOUR-SUPABASE-PROJECT.supabase.co';
-  static const supabaseAnonKey = 'YOUR-SUPABASE-ANON-KEY';
-
   static const primaryColor = Color(0xFF1B4DE4);
   static const accentColor = Color(0xFF00D6C2);
 

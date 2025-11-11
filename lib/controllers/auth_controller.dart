@@ -1,15 +1,11 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../app/routes/app_routes.dart';
 import '../services/api_service.dart';
 
-/**
- * Handles authentication state and Google OAuth with Supabase.
- * It is also used to check if the user is logged in.
- * It is also used to sign in with Google.
- * It is also used to sign out.
- */
 class AuthController extends GetxController {
   AuthController(this._apiService);
 
@@ -17,15 +13,28 @@ class AuthController extends GetxController {
 
   final isLoading = false.obs;
   final errorMessage = RxnString();
+  late final StreamSubscription<AuthState> _authSub;
 
-  bool get isLoggedIn => Supabase.instance.client.auth.currentUser != null;
+  @override
+  void onInit() {
+    super.onInit();
+    _authSub =
+        Supabase.instance.client.auth.onAuthStateChange.listen((AuthState data) {
+      if (data.event == AuthChangeEvent.signedIn &&
+          data.session?.user != null) {
+        Get.offAllNamed(AppRoutes.account);
+      }
+      if (data.event == AuthChangeEvent.signedOut) {
+        Get.offAllNamed(AppRoutes.onboarding);
+      }
+    });
+  }
 
   Future<void> signInWithGoogle() async {
     try {
       isLoading.value = true;
       errorMessage.value = null;
       await _apiService.signInWithGoogle();
-      Get.offAllNamed(AppRoutes.outfits);
     } catch (error) {
       errorMessage.value = 'Google sign in failed. Please try again.';
     } finally {
@@ -34,8 +43,17 @@ class AuthController extends GetxController {
   }
 
   Future<void> signOut() async {
-    await _apiService.signOut();
-    Get.offAllNamed(AppRoutes.onboarding);
+    try {
+      isLoading.value = true;
+      await _apiService.signOut();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    _authSub.cancel();
+    super.onClose();
   }
 }
-

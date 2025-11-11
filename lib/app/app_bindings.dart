@@ -13,13 +13,12 @@ import '../utils/color_analyzer.dart';
 class AppBindings extends Bindings {
   @override
   void dependencies() {
-    Get.put<ApiService>(ApiService());
-    Get.lazyPut(() => AuthController(Get.find<ApiService>()));
+    Get.put<ApiService>(ApiService(), permanent: true);
+    Get.put(AuthController(Get.find<ApiService>()), permanent: true);
     Get.put(AppCameraController());
     Get.lazyPut(
-      () => AnalysisController(
-        AIService(const ColorAnalyzer()),
-      ),
+      () => AnalysisController(AIService(const ColorAnalyzer())),
+      fenix: true,
     );
     Get.lazyPut(() => OutfitController(const ClothingService()));
   }

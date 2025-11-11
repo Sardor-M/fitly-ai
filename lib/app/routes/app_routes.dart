@@ -6,28 +6,30 @@ import '../../screens/color_palette_screen.dart';
 import '../../screens/onboarding_screen.dart';
 import '../../screens/outfit_swipe_screen.dart';
 import '../../screens/product_detail_screen.dart';
-import '../../screens/splash_screen.dart';
+import '../../screens/my_account_screen.dart';
+import '../../screens/auth_callback_screen.dart';
 
 /// Central registry for all navigator routes and transitions.
 class AppRoutes {
   AppRoutes._();
 
-  static const splash = '/';
-  static const onboarding = '/onboarding';
+  static const onboarding = '/';
   static const camera = '/camera';
   static const analysis = '/analysis';
   static const palette = '/palette';
   static const outfits = '/outfits';
+  static const account = '/account';
+  static const authCallback = '/auth/callback';
   static const productDetail = '/product';
 
   static final pages = <GetPage>[
     GetPage(
-      name: splash,
-      page: () => const SplashScreen(),
-    ),
-    GetPage(
       name: onboarding,
       page: () => const OnboardingScreen(),
+    ),
+    GetPage(
+      name: authCallback,
+      page: () => const AuthCallbackScreen(),
     ),
     GetPage(
       name: camera,
@@ -48,6 +50,10 @@ class AppRoutes {
       name: outfits,
       page: () => const OutfitSwipeScreen(),
       transition: Transition.rightToLeftWithFade,
+    ),
+    GetPage(
+      name: account,
+      page: () => const MyAccountScreen(),
     ),
     GetPage(
       name: productDetail,
