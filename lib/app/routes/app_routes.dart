@@ -9,6 +9,7 @@ import '../../screens/outfit_swipe_screen.dart';
 import '../../screens/product_detail_screen.dart';
 import '../../screens/splash_screen.dart';
 import '../bindings/live_camera_binding.dart';
+import '../bindings/outfit_binding.dart';
 
 /// Central registry for all navigator routes and transitions.
 class AppRoutes {
@@ -56,6 +57,7 @@ class AppRoutes {
     GetPage(
       name: outfits,
       page: () => const OutfitSwipeScreen(),
+      binding: OutfitBinding(),
       transition: Transition.rightToLeftWithFade,
     ),
     GetPage(
