@@ -15,7 +15,7 @@ class AppBindings extends Bindings {
   void dependencies() {
     Get.put<ApiService>(ApiService());
     Get.lazyPut(() => AuthController(Get.find<ApiService>()));
-    Get.put(AppCameraController());
+
     Get.lazyPut(
       () => AnalysisController(
         AIService(const ColorAnalyzer()),

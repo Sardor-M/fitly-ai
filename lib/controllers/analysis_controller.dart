@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:get/get.dart';
 
@@ -16,12 +16,12 @@ class AnalysisController extends GetxController {
   final isLoading = false.obs;
   final errorMessage = RxnString();
 
-  Future<void> analyzePhoto(File photo) async {
+  Future<void> analyzePhoto(Uint8List photoBytes) async {
     isLoading.value = true;
     errorMessage.value = null;
 
     try {
-      final result = await _aiService.analyzeUser(photo);
+      final result = await _aiService.analyzeUser(photoBytes);
       analysis.value = result.analysis;
       dominantColors.assignAll(result.palette);
     } catch (error) {

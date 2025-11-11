@@ -2,11 +2,13 @@ import 'package:get/get.dart';
 
 import '../../screens/analysis_screen.dart';
 import '../../screens/camera_screen.dart';
+import '../../screens/live_camera_screen.dart';
 import '../../screens/color_palette_screen.dart';
 import '../../screens/onboarding_screen.dart';
 import '../../screens/outfit_swipe_screen.dart';
 import '../../screens/product_detail_screen.dart';
 import '../../screens/splash_screen.dart';
+import '../bindings/live_camera_binding.dart';
 
 /// Central registry for all navigator routes and transitions.
 class AppRoutes {
@@ -15,6 +17,7 @@ class AppRoutes {
   static const splash = '/';
   static const onboarding = '/onboarding';
   static const camera = '/camera';
+  static const cameraLive = '/camera_live';
   static const analysis = '/analysis';
   static const palette = '/palette';
   static const outfits = '/outfits';
@@ -32,6 +35,12 @@ class AppRoutes {
     GetPage(
       name: camera,
       page: () => const CameraScreen(),
+      transition: Transition.fadeIn,
+    ),
+    GetPage(
+      name: cameraLive,
+      page: () => const LiveCameraScreen(),
+      binding: LiveCameraBinding(),
       transition: Transition.fadeIn,
     ),
     GetPage(
@@ -55,4 +64,3 @@ class AppRoutes {
     ),
   ];
 }
-

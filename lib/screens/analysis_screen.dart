@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -14,7 +14,8 @@ class AnalysisScreen extends GetView<AnalysisController> {
 
   @override
   Widget build(BuildContext context) {
-    final File? photo = Get.arguments is File ? Get.arguments as File : null;
+    final Uint8List? photoBytes =
+        Get.arguments is Uint8List ? Get.arguments as Uint8List : null;
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -27,11 +28,11 @@ class AnalysisScreen extends GetView<AnalysisController> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (photo != null)
+              if (photoBytes != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(24),
-                  child: Image.file(
-                    photo,
+                  child: Image.memory(
+                    photoBytes,
                     height: 240,
                     width: double.infinity,
                     fit: BoxFit.cover,

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class AppConstants {
   AppConstants._();
 
-  static const appName = 'Fitly AI';
+  static const appName = 'FIT:LY';
 
   /// TODO(sardor): Replace the placeholders with your Supabase credentials.
   static const supabaseUrl = 'https://YOUR-SUPABASE-PROJECT.supabase.co';
