@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
@@ -20,14 +21,24 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
     super.initState();
     _handleCallback();
     
-    // Listen for auth state changes
+    /** 
+      Listen for auth state changes
+    */
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       final AuthChangeEvent event = data.event;
       final Session? session = data.session;
       
       if (event == AuthChangeEvent.signedIn && session != null) {
-        // User successfully signed in
-        Get.offAllNamed(AppRoutes.account);
+        /** 
+          User successfully signed in - use post-frame callback to avoid navigator conflicts
+        */
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) {
+              Get.offAllNamed(AppRoutes.welcome);
+            }
+          });
+        });
       }
     });
   }
@@ -40,12 +51,18 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
 
   Future<void> _handleCallback() async {
     try {
-      // For web, we need to handle the URL fragments properly
+      /** 
+        For web, we need to handle the URL fragments properly
+      */
       final uri = Uri.base;
       
-      // Check if we have access_token in the URL fragment
+      /** 
+        Check if we have access_token in the URL fragment
+      */
       if (uri.fragment.contains('access_token')) {
-        // Parse the fragment manually
+        /** 
+          Parse the fragment manually
+        */
         final fragments = uri.fragment.split('&');
         final params = <String, String>{};
         
@@ -56,38 +73,77 @@ class _AuthCallbackScreenState extends State<AuthCallbackScreen> {
           }
         }
         
-        // If we have access_token, wait a bit for Supabase to process
+        /** 
+          If we have access_token, wait a bit for Supabase to process
+        */
         if (params.containsKey('access_token')) {
-          await Future.delayed(Duration(milliseconds: 500));
+          await Future.delayed(const Duration(milliseconds: 500));
         }
       }
       
-      // Check if user is already logged in
+      /** 
+        Check if user is already logged in
+      */
       final session = Supabase.instance.client.auth.currentSession;
       final user = Supabase.instance.client.auth.currentUser;
       
       if (session != null && user != null) {
-        Get.offAllNamed(AppRoutes.account);
+        /** 
+          Use post-frame callback to avoid navigator conflicts
+        */
+        SchedulerBinding.instance.addPostFrameCallback((_) {
+          Future.delayed(const Duration(milliseconds: 200), () {
+            if (mounted) {
+              Get.offAllNamed(AppRoutes.welcome);
+            }
+          });
+        });
       } else {
-        // Try to get session from URL one more time
+        /** 
+          Try to get session from URL one more time
+        */
         await Supabase.instance.client.auth.getSessionFromUrl(uri);
         
-        // Check again after attempting to get session
-        await Future.delayed(Duration(milliseconds: 500));
+        /** 
+          Check again after attempting to get session
+        */
+        await Future.delayed(const Duration(milliseconds: 500));
         
         final checkSession = Supabase.instance.client.auth.currentSession;
         if (checkSession != null) {
-          Get.offAllNamed(AppRoutes.account);
+          /** 
+            Use post-frame callback to avoid navigator conflicts
+          */
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            Future.delayed(const Duration(milliseconds: 200), () {
+              if (mounted) {
+                Get.offAllNamed(AppRoutes.welcome);
+              }
+            });
+          });
         } else {
-          // No session found, redirect to onboarding
-          Get.offAllNamed(AppRoutes.onboarding);
+          /** 
+            No session found, redirect to onboarding
+          */
+          SchedulerBinding.instance.addPostFrameCallback((_) {
+            Future.delayed(const Duration(milliseconds: 200), () {
+              if (mounted) {
+                Get.offAllNamed(AppRoutes.onboarding);
+              }
+            });
+          });
         }
       }
     } catch (e) {
       print('Auth callback error: $e');
-      // On error, check if user exists
       final hasUser = Supabase.instance.client.auth.currentUser != null;
-      Get.offAllNamed(hasUser ? AppRoutes.account : AppRoutes.onboarding);
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 200), () {
+          if (mounted) {
+            Get.offAllNamed(hasUser ? AppRoutes.welcome : AppRoutes.onboarding);
+          }
+        });
+      });
     }
   }
 

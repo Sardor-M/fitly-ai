@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../app/routes/app_routes.dart';
-import '../controllers/analysis_controller.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/app_controller.dart';
 import '../controllers/camera_controller.dart';
 import '../utils/constants.dart';
 import '../widgets/camera/camera_preview.dart';
@@ -15,24 +14,95 @@ class LiveCameraScreen extends GetView<AppCameraController> {
   const LiveCameraScreen({super.key});
 
   Future<void> _captureAndAnalyze() async {
-    final XFile? file = await controller.capturePhoto();
-    if (file == null) return;
-    final Uint8List bytes = await file.readAsBytes();
-    final analysisController = Get.find<AnalysisController>();
-    await analysisController.analyzePhoto(bytes);
-    Get.toNamed(AppRoutes.analysis, arguments: bytes);
+    if (controller.isBusy.value) return;
+    
+    controller.isBusy.value = true;
+    
+    try {
+      final XFile? file = await controller.capturePhoto();
+      if (file == null) {
+        controller.isBusy.value = false;
+        return;
+      }
+      
+      final Uint8List bytes = await file.readAsBytes();
+      
+      /** 
+        Here we are ensuring that the AppController
+        is initialized before navigation
+      */
+      AppController appController;
+      try {
+        appController = Get.find<AppController>();
+      } catch (e) {
+        appController = Get.put(AppController(), permanent: true);
+      }
+      
+      /** 
+        Store selfie in global state
+      */
+      await appController.setSelfieFromBytes(bytes);
+      
+      /** 
+        Set analyzing state to show loading animation
+      */
+      appController.isAnalyzing.value = true;
+      appController.analysisError.value = '';
+      
+      /** 
+        Wait a bit to ensure state is set
+      */
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      /** 
+        Navigate to analysis screen
+        This will automatically set isAnalyzing to false when done
+      */
+      Get.offNamed(AppRoutes.analysis);
+      await Future.delayed(const Duration(seconds: 2));
+      
+      /** 
+        Start face analysis in background, 
+        it will update UI when done with pre-selections
+        This will automatically set isAnalyzing to false when done
+      */
+      await appController.analyzeFace();
+    } catch (e, stackTrace) {
+      print('Error in _captureAndAnalyze: $e');
+      print('Stack trace: $stackTrace');
+      
+      /** 
+        Reset busy state on error
+      */
+      controller.isBusy.value = false;
+      /** 
+        Reset analyzing state on error
+      */
+      try {
+        final appController = Get.find<AppController>();
+        appController.isAnalyzing.value = false;
+        appController.analysisError.value = 'Failed to process photo: $e';
+      } catch (_) {}
+      
+      if (Get.isSnackbarOpen) {
+        Get.back();
+      }
+      Get.snackbar('Error', 'Failed to process photo: $e');
+    } finally {
+      controller.isBusy.value = false;
+      appController.isAnalyzing.value = false;
+      appController.analysisError.value = 'Failed to process photo: $e';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final authController = Get.find<AuthController>();
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // Header with logo and logout (same as camera_screen)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
@@ -45,32 +115,10 @@ class LiveCameraScreen extends GetView<AppCameraController> {
                       color: Colors.black,
                     ),
                   ),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: authController.signOut,
-                        style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFFFD2375),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: const Text('Logout'),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.person, color: Colors.black),
-                    ],
-                  ),
                 ],
               ),
             ),
 
-            // Navigation bar with back button and title (same as camera_screen)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Row(
@@ -97,7 +145,6 @@ class LiveCameraScreen extends GetView<AppCameraController> {
 
             const SizedBox(height: 32),
 
-            // Live camera preview area in the same container style
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -130,7 +177,6 @@ class LiveCameraScreen extends GetView<AppCameraController> {
 
             const SizedBox(height: 32),
 
-            // Single Capture button (same style section)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Obx(
@@ -157,7 +203,6 @@ class LiveCameraScreen extends GetView<AppCameraController> {
 
             const SizedBox(height: 24),
 
-            // Info message (same as camera_screen)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Container(

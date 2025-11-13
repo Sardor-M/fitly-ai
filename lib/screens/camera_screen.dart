@@ -1,13 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/scheduler.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../app/routes/app_routes.dart';
-import '../controllers/analysis_controller.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/app_controller.dart';
 import '../utils/constants.dart';
 
 class CameraScreen extends StatefulWidget {
@@ -27,9 +26,15 @@ class _CameraScreenState extends State<CameraScreen> {
 
   Future<void> _pickImage(ImageSource source) async {
     try {
+      setState(() {
+        _isProcessing = true;
+      });
+
       final XFile? image = await _picker.pickImage(
         source: source,
         imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1920,
       );
 
       if (image != null) {
@@ -38,12 +43,59 @@ class _CameraScreenState extends State<CameraScreen> {
           _imageBytes = bytes;
         });
         await _analyzePhoto();
+      } else {
+        setState(() {
+          _isProcessing = false;
+        });
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to pick image: $e')),
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
+      }
+    }
+  }
+
+  Future<void> _navigateToLiveCamera() async {
+    if (_isProcessing) return;
+    
+    try {
+      /** 
+        Here we are ensuring that the AppController
+        is initialized before navigation
+      */
+      try {
+        Get.find<AppController>();
+      } catch (e) {
+        Get.put(AppController(), permanent: true);
+      }
+      
+      /** 
+        Small delay to ensure navigator is ready
+      */
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      if (mounted) {
+        await Get.toNamed(AppRoutes.cameraLive);
+      }
+    } catch (e) {
+      print('Navigation error: $e');
+      /** 
+        If navigation fails, try again after a delay
+      */
+      if (mounted) {
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted) {
+            Get.toNamed(AppRoutes.cameraLive);
+          }
+        });
       }
     }
   }
@@ -56,16 +108,65 @@ class _CameraScreenState extends State<CameraScreen> {
     });
 
     try {
-      final analysisController = Get.find<AnalysisController>();
-      await analysisController.analyzePhoto(_imageBytes!);
-      if (mounted) {
-        Get.toNamed(AppRoutes.analysis, arguments: _imageBytes);
+      /** 
+        Ensure AppController is available
+      */
+      AppController appController;
+      try {
+        appController = Get.find<AppController>();
+      } catch (e) {
+        appController = Get.put(AppController(), permanent: true);
       }
-    } catch (e) {
+      
+        // Store selfie in global state
+      await appController.setSelfieFromBytes(_imageBytes!);
+      
+      /** 
+        Set analyzing state to show loading animation
+      */
+      appController.isAnalyzing.value = true;
+      appController.analysisError.value = '';
+      
+      /** 
+        Wait a bit to ensure state is set
+      */
+      await Future.delayed(const Duration(milliseconds: 100));
+      
+      /** 
+        Navigate to analysis screen (will show loading animation)
+      */
+      if (mounted) {
+        Get.offNamed(AppRoutes.analysis);
+        
+        /** 
+          Wait 1-2 seconds to show "Analyzing..." animation
+        */
+        await Future.delayed(const Duration(seconds: 2));
+      }
+      
+      /** 
+        Start face analysis in background (will update UI when done with pre-selections)
+        This will automatically set isAnalyzing to false when done
+      */ 
+      await appController.analyzeFace();
+    } catch (e, stackTrace) {
+      print('Error in _analyzePhoto: $e');
+      print('Stack trace: $stackTrace');
+      
+      try {
+        final appController = Get.find<AppController>();
+        appController.isAnalyzing.value = false;
+        appController.analysisError.value = 'Analysis failed: $e';
+      } catch (_) {}
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Analysis failed: $e')),
+          SnackBar(
+            content: Text('Analysis failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
+        Get.back();
       }
     } finally {
       if (mounted) {
@@ -79,52 +180,45 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final authController = Get.find<AuthController>();
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
-            // Header with logo and logout
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    AppConstants.appName.toUpperCase(),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                  GestureDetector(
+                    onTap: () {
+                      /** 
+                        Navigate to camera route (home page)
+                      */
+                      Get.offAllNamed(AppRoutes.camera);
+                    },
+                    child: Text(
+                      AppConstants.appName.toUpperCase(),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      TextButton(
-                        onPressed: authController.signOut,
-                        style: TextButton.styleFrom(
-                          backgroundColor: _pinkColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: const Text('Logout'),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.person, color: Colors.black),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.person, color: Colors.black),
+                    onPressed: () => Get.toNamed(AppRoutes.account),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
             ),
 
-            // Navigation bar with back button and title
+            /** 
+              Navigation bar with back button and title
+            */
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               child: Row(
@@ -144,14 +238,16 @@ class _CameraScreenState extends State<CameraScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 48), // Balance the back button
+                  const SizedBox(width: 48), 
                 ],
               ),
             ),
 
             const SizedBox(height: 32),
 
-            // Photo selection area
+            /** 
+              Expanded container for the image picker
+            */
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -204,7 +300,9 @@ class _CameraScreenState extends State<CameraScreen> {
 
             const SizedBox(height: 32),
 
-            // Action buttons
+            /** 
+              Action buttons - Camera and Gallery
+            */
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
@@ -215,19 +313,16 @@ class _CameraScreenState extends State<CameraScreen> {
                       onPressed: _isProcessing
                           ? null
                           : () {
-                              final isDesktop = !kIsWeb &&
-                                  (defaultTargetPlatform == TargetPlatform.macOS ||
-                                      defaultTargetPlatform == TargetPlatform.windows ||
-                                      defaultTargetPlatform == TargetPlatform.linux);
-                              if (kIsWeb || isDesktop) {
-                                Get.toNamed(AppRoutes.cameraLive);
-                              } else {
-                                _pickImage(ImageSource.camera);
-                              }
+                              /** 
+                                We make sure that the callback is executed after the frame is rendered
+                              */
+                              SchedulerBinding.instance.addPostFrameCallback((_) {
+                                _navigateToLiveCamera();
+                              });
                             },
                       icon: const Icon(Icons.camera_alt, color: Colors.white),
                       label: const Text(
-                        'Camera',
+                        'Take Selfie',
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -246,10 +341,9 @@ class _CameraScreenState extends State<CameraScreen> {
                       onPressed: _isProcessing
                           ? null
                           : () => _pickImage(ImageSource.gallery),
-                      icon:
-                          const Icon(Icons.photo_library, color: Colors.white),
+                      icon: const Icon(Icons.photo_library, color: Colors.white),
                       label: const Text(
-                        'Gallery',
+                        'Select from Gallery',
                         style: TextStyle(color: Colors.white),
                       ),
                       style: ElevatedButton.styleFrom(
@@ -267,14 +361,16 @@ class _CameraScreenState extends State<CameraScreen> {
 
             const SizedBox(height: 24),
 
-            // Info message
+            /** 
+              Info message about the AI analyzing the photo
+            */
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: _lightPinkColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
                   '✨ AI analyzes your skin tone and fashion taste to find the perfect look for you',
