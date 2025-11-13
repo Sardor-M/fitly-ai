@@ -66,25 +66,31 @@ class AppHeader extends StatelessWidget {
               child: BrandLogo(size: 28),
             ),
           if (isLoggedIn) ...[
-            IconButton(
-              icon: CircleAvatar(
-                radius: 18,
-                backgroundColor: theme.colorScheme.primaryContainer,
-                backgroundImage: user.userMetadata?['avatar_url'] != null
-                    ? NetworkImage(user.userMetadata!['avatar_url'])
-                    : null,
-                child: user.userMetadata?['avatar_url'] == null
-                    ? Icon(
-                        Icons.person,
-                        size: 20,
-                        color: theme.colorScheme.onPrimaryContainer,
-                      )
-                    : null,
-              ),
-              onPressed: () => Get.toNamed(AppRoutes.account),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
+                  IconButton(
+                    icon: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      backgroundImage: user.userMetadata?['avatar_url'] != null
+                          ? NetworkImage(user.userMetadata!['avatar_url'])
+                          : null,
+                      onBackgroundImageError: (exception, stackTrace) {
+                        /** 
+                          Avatar image error
+                        */
+                        print('Avatar image error: $exception');
+                      },
+                      child: user.userMetadata?['avatar_url'] == null
+                          ? Icon(
+                              Icons.person,
+                              size: 20,
+                              color: theme.colorScheme.onPrimaryContainer,
+                            )
+                          : null,
+                    ),
+                    onPressed: () => Get.toNamed(AppRoutes.account),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
           ],
           if (actions != null) ...actions!,
         ],
