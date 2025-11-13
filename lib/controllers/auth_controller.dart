@@ -22,7 +22,7 @@ class AuthController extends GetxController {
         Supabase.instance.client.auth.onAuthStateChange.listen((AuthState data) {
       if (data.event == AuthChangeEvent.signedIn &&
           data.session?.user != null) {
-        Get.offAllNamed(AppRoutes.account);
+        Get.offAllNamed(AppRoutes.welcome);
       }
       if (data.event == AuthChangeEvent.signedOut) {
         Get.offAllNamed(AppRoutes.onboarding);
@@ -50,6 +50,8 @@ class AuthController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  User? get currentUser => Supabase.instance.client.auth.currentUser;
 
   @override
   void onClose() {

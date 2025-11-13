@@ -10,13 +10,19 @@ import 'utils/constants.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Load environment variables from .env file
+    
+  /** 
+    Load environment variables from .env file
+  */
   await dotenv.load(fileName: '.env');
   
   await Supabase.initialize(
     url: AppSecrets.supabaseUrl,
     anonKey: AppSecrets.supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+      autoRefreshToken: true,
+    ),
   );
   runApp(const StyleAIApp());
 }
@@ -39,7 +45,11 @@ class _StyleAIAppState extends State<StyleAIApp> {
   }
 
   Future<void> _checkAuthAndRoute() async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    /** 
+      Wait a bit for Supabase to initialize
+    */
+    await Future.delayed(const Duration(milliseconds: 300));
+    
     final session = Supabase.instance.client.auth.currentSession;
     final user = Supabase.instance.client.auth.currentUser;
     
@@ -47,7 +57,7 @@ class _StyleAIAppState extends State<StyleAIApp> {
       setState(() {
         _isLoading = false;
         _initialRoute = (session != null && user != null)
-            ? AppRoutes.account
+            ? AppRoutes.welcome
             : AppRoutes.onboarding;
       });
     }
@@ -55,42 +65,62 @@ class _StyleAIAppState extends State<StyleAIApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          backgroundColor: AppTheme.lightTheme.colorScheme.primary,
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white.withValues(alpha: 0.9),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Loading...',
-                  style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
+    /** 
+      Always use GetMaterialApp to prevent layout shifts
+      Use key to force rebuild when route changes
+    */
     return GetMaterialApp(
+      key: ValueKey('${_isLoading}_$_initialRoute'),
       title: AppConstants.appName,
       theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      initialRoute: _initialRoute,
       getPages: AppRoutes.pages,
       initialBinding: AppBindings(),
+      initialRoute: _initialRoute,
+      /** 
+        Use builder to show loading screen while checking auth
+      */
+      builder: (context, child) {
+        if (_isLoading) {
+          return _LoadingScreen();
+        }
+        /** 
+          Return the child (the actual route) when loading is complete
+        */
+        return child ?? const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+/** 
+  Separate loading screen widget
+*/
+class _LoadingScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.lightTheme.colorScheme.primary,
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Loading...',
+              style: AppTheme.lightTheme.textTheme.titleMedium?.copyWith(
+                color: Colors.white.withValues(alpha: 0.8),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

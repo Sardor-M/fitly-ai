@@ -5,24 +5,29 @@ import '../../screens/camera_screen.dart';
 import '../../screens/live_camera_screen.dart';
 import '../../screens/color_palette_screen.dart';
 import '../../screens/onboarding_screen.dart';
+import '../../screens/welcome_screen.dart';
 import '../../screens/outfit_swipe_screen.dart';
+import '../../screens/outfit_generating_screen.dart';
 import '../../screens/product_detail_screen.dart';
-import '../../screens/splash_screen.dart';
 import '../bindings/live_camera_binding.dart';
 import '../bindings/outfit_binding.dart';
 import '../../screens/my_account_screen.dart';
 import '../../screens/auth_callback_screen.dart';
 
-/// Central registry for all navigator routes and transitions.
+/** 
+  Central registry for all navigator routes and transitions.
+*/
 class AppRoutes {
   AppRoutes._();
 
   static const onboarding = '/';
+  static const welcome = '/welcome';
   static const camera = '/camera';
   static const cameraLive = '/camera_live';
   static const analysis = '/analysis';
   static const palette = '/palette';
   static const outfits = '/outfits';
+  static const outfitGenerating = '/outfits/generating';
   static const account = '/account';
   static const authCallback = '/auth/callback';
   static const productDetail = '/product';
@@ -31,6 +36,11 @@ class AppRoutes {
     GetPage(
       name: onboarding,
       page: () => const OnboardingScreen(),
+    ),
+    GetPage(
+      name: welcome,
+      page: () => const WelcomeScreen(),
+      transition: Transition.fadeIn,
     ),
     GetPage(
       name: authCallback,
@@ -56,6 +66,11 @@ class AppRoutes {
       name: palette,
       page: () => const ColorPaletteScreen(),
       transition: Transition.downToUp,
+    ),
+    GetPage(
+      name: outfitGenerating,
+      page: () => const OutfitGeneratingScreen(),
+      transition: Transition.fadeIn,
     ),
     GetPage(
       name: outfits,
